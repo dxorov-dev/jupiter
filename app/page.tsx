@@ -116,14 +116,12 @@ export default function JupiterApp() {
     })
     haptic('light')
     setStatus('added')
-    setPredictions([])
   }, [haptic])
 
   const deleteLastNumber = useCallback(() => {
     setNumbers(prev => {
       if (prev.length > 0) {
         setStatus('deleted')
-        setPredictions([])
         return prev.slice(0, -1)
       }
       return prev
