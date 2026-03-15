@@ -1,101 +1,409 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect, useCallback } from 'react'
+import { useTelegram } from '@/hooks/useTelegram'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2, Trash2, RotateCcw, Sparkles, Globe } from 'lucide-react'
+import { Language, LANGUAGE_NAMES, LANGUAGE_FLAGS, translations, TranslationKey } from '@/lib/i18n'
+
+const MIN_NUMBERS = 8
+const MAX_NUMBERS = 120
+const LANGUAGES: Language[] = ['ru', 'tr', 'en', 'id', 'es', 'ms', 'ko']
+
+interface Prediction {
+  number: number
+  position: number
+}
+
+// Language Selection Screen
+function LanguageScreen({ onSelect }: { onSelect: (lang: Language) => void }) {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center p-4">
+      <div className="text-center mb-8">
+        <div className="text-6xl mb-4">🪐</div>
+        <h1 className="text-3xl font-bold text-orange-500 mb-2">Jupiter</h1>
+        <p className="text-gray-400 text-sm">Baccarat Prediction System</p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <Card className="bg-[#262626] border-gray-700 w-full max-w-sm">
+        <CardHeader className="py-4">
+          <CardTitle className="text-lg font-bold text-gray-200 text-center">
+            🌐 Select Language
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="space-y-2">
+            {LANGUAGES.map(lang => (
+              <Button
+                key={lang}
+                onClick={() => onSelect(lang)}
+                className="w-full flex items-center justify-center gap-3 py-4 text-base bg-[#333] hover:bg-orange-600 text-gray-200 hover:text-white border border-gray-600 hover:border-orange-600 transition-all"
+                variant="outline"
+              >
+                <span className="text-2xl">{LANGUAGE_FLAGS[lang]}</span>
+                <span className="font-medium">{LANGUAGE_NAMES[lang]}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
+}
+
+export default function JupiterApp() {
+  const { haptic, notification, isTelegram } = useTelegram()
+
+  const [isLoadingStorage, setIsLoadingStorage] = useState(true)
+  const [languageSelected, setLanguageSelected] = useState(false)
+  const [language, setLanguage] = useState<Language>('en')
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false)
+  const [numbers, setNumbers] = useState<number[]>([])
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [status, setStatus] = useState('ready')
+
+  const t = useCallback((key: TranslationKey): string => {
+    return translations[language][key]
+  }, [language])
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('jupiterLanguage') as Language
+    if (savedLang && LANGUAGES.includes(savedLang)) {
+      setLanguage(savedLang)
+      setLanguageSelected(true)
+    }
+
+    const saved = localStorage.getItem('jupiterNumbers')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) {
+          setNumbers(parsed.slice(0, MAX_NUMBERS))
+        }
+      } catch (e) {
+        console.error('Failed to load saved numbers:', e)
+      }
+    }
+
+    setIsLoadingStorage(false)
+  }, [])
+
+  const handleLanguageSelect = (lang: Language) => {
+    setLanguage(lang)
+    localStorage.setItem('jupiterLanguage', lang)
+    setLanguageSelected(true)
+    haptic('medium')
+  }
+
+  useEffect(() => {
+    if (languageSelected) {
+      localStorage.setItem('jupiterLanguage', language)
+    }
+  }, [language, languageSelected])
+
+  useEffect(() => {
+    localStorage.setItem('jupiterNumbers', JSON.stringify(numbers))
+  }, [numbers])
+
+  const addNumber = useCallback((num: number) => {
+    setNumbers(prev => {
+      if (prev.length >= MAX_NUMBERS) {
+        return [...prev.slice(1), num]
+      }
+      return [...prev, num]
+    })
+    haptic('light')
+    setStatus('added')
+    setPredictions([])
+  }, [haptic])
+
+  const deleteLastNumber = useCallback(() => {
+    setNumbers(prev => {
+      if (prev.length > 0) {
+        setStatus('deleted')
+        setPredictions([])
+        return prev.slice(0, -1)
+      }
+      return prev
+    })
+    haptic('medium')
+  }, [haptic])
+
+  const clearAllNumbers = useCallback(() => {
+    setNumbers([])
+    setPredictions([])
+    setStatus('cleared')
+    haptic('heavy')
+    notification('warning')
+  }, [haptic, notification])
+
+  const predictNumbers = useCallback(async () => {
+    if (numbers.length < MIN_NUMBERS) {
+      setStatus('needMinNumbers')
+      notification('warning')
+      return
+    }
+
+    setIsLoading(true)
+    setStatus('predicting')
+
+    try {
+      const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ numbers }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Prediction error')
+      }
+
+      setPredictions(data.predictions)
+      setStatus('predictionComplete')
+      haptic('heavy')
+      notification('success')
+    } catch (error) {
+      console.error('Prediction error:', error)
+      setStatus('predictionError')
+      notification('error')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [numbers, haptic, notification])
+
+  const changeLanguage = (lang: Language) => {
+    setLanguage(lang)
+    setShowLanguageSelector(false)
+    haptic('light')
+  }
+
+  const getStatusMessage = (): string => {
+    switch (status) {
+      case 'ready': return t('ready')
+      case 'added': return `${t('addedNumber')} ✅`
+      case 'deleted': return `${t('deletedNumber')} ✅`
+      case 'cleared': return t('baseCleared')
+      case 'needMinNumbers': return t('needMinNumbers')
+      case 'predicting': return t('predicting')
+      case 'predictionComplete': return t('predictionComplete')
+      case 'predictionError': return t('predictionError')
+      default: return t('ready')
+    }
+  }
+
+  const getCountColor = () => {
+    if (numbers.length >= MIN_NUMBERS) return 'text-green-500'
+    return 'text-red-500'
+  }
+
+  const recentNumbers = numbers.slice(-20)
+
+  if (isLoadingStorage) {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🪐</div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!languageSelected) {
+    return <LanguageScreen onSelect={handleLanguageSelect} />
+  }
+
+  return (
+    <div className="min-h-screen bg-[#1a1a1a] text-gray-100 p-3 pb-6">
+      {/* Header */}
+      <header className="text-center mb-3">
+        <h1 className="text-xl font-bold text-orange-500 flex items-center justify-center gap-2">
+          🪐 {t('title')}
+        </h1>
+        {isTelegram && (
+          <p className="text-xs text-gray-400 mt-1">Telegram Mini App</p>
+        )}
+      </header>
+
+      {/* Language Selector */}
+      <div className="relative mb-3">
+        <div className="text-xs text-gray-400 mb-1 text-center">{t('selectLanguage')}</div>
+        <button
+          onClick={() => setShowLanguageSelector(!showLanguageSelector)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#262626] border border-gray-700 text-sm text-gray-300 hover:bg-[#333] transition-colors"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{LANGUAGE_FLAGS[language]} {LANGUAGE_NAMES[language]}</span>
+        </button>
+
+        {showLanguageSelector && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[#262626] border border-gray-700 rounded-lg overflow-hidden z-50 shadow-lg">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang}
+                onClick={() => changeLanguage(lang)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#333] transition-colors ${language === lang ? 'bg-orange-600/20 text-orange-500' : 'text-gray-300'}`}
+              >
+                <span className="text-lg">{LANGUAGE_FLAGS[lang]}</span>
+                <span>{LANGUAGE_NAMES[lang]}</span>
+                {language === lang && <span className="ml-auto">✓</span>}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Prediction Results */}
+      {predictions.length > 0 && (
+        <Card className="bg-[#262626] border-orange-600 border-2 mb-3">
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="text-sm font-bold text-orange-500 text-center">
+              {t('prediction')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 pt-0">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {predictions.map((pred) => (
+                <div key={pred.position} className="flex flex-col items-center">
+                  <span className="text-[10px] text-gray-400 mb-1">{pred.position}</span>
+                  <span className={`inline-flex items-center justify-center min-w-[2.5rem] h-10 rounded-lg text-lg font-bold ${pred.number === 1 ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'}`}>
+                    {pred.number}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Counter */}
+      <div className="text-center mb-2">
+        <span className="text-sm">
+          {t('numbersInBase')}{' '}
+          <span className={`font-bold ${getCountColor()}`}>
+            {numbers.length} ({t('minRequired')})
+          </span>
+        </span>
+      </div>
+
+      {/* Status */}
+      <div className="text-center text-xs text-gray-400 mb-2">
+        {getStatusMessage()}
+      </div>
+
+      {/* Input Buttons */}
+      <Card className="bg-[#262626] border-gray-700 mb-3">
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-sm font-bold text-gray-200">
+            {t('quickButtons')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={() => addNumber(1)}
+              className="w-28 h-16 text-2xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              1
+            </Button>
+            <Button
+              onClick={() => addNumber(2)}
+              className="w-28 h-16 text-2xl font-bold bg-red-600 hover:bg-red-700 text-white"
+            >
+              2
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Control Buttons */}
+      <div className="flex gap-2 mb-3">
+        <Button
+          onClick={deleteLastNumber}
+          variant="outline"
+          className="flex-1 bg-orange-600 hover:bg-orange-700 text-white border-orange-600 h-10"
+        >
+          <RotateCcw className="w-4 h-4 mr-1" />
+          {t('delete')}
+        </Button>
+        <Button
+          onClick={predictNumbers}
+          disabled={isLoading || numbers.length < MIN_NUMBERS}
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white h-10 font-bold"
+        >
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 mr-1" />
+          )}
+          {t('predict')}
+        </Button>
+        <Button
+          onClick={clearAllNumbers}
+          variant="outline"
+          className="flex-1 bg-red-600 hover:bg-red-700 text-white border-red-600 h-10"
+        >
+          <Trash2 className="w-4 h-4 mr-1" />
+          {t('clear')}
+        </Button>
+      </div>
+
+      {/* Recent Numbers */}
+      <Card className="bg-[#262626] border-gray-700 mb-3">
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-sm font-bold text-gray-200">
+            {t('lastNumbers')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-2 pt-0">
+          {recentNumbers.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {recentNumbers.map((num, index) => (
+                <span
+                  key={index}
+                  className={`inline-flex items-center justify-center min-w-[1.75rem] h-7 rounded font-bold text-sm ${num === 1 ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'}`}
+                >
+                  {num}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-xs">{t('noNumbers')}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Current Database */}
+      <Card className="bg-[#262626] border-gray-700">
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-sm font-bold text-gray-200 flex items-center justify-between">
+            <span>{t('currentBase')}</span>
+            <span className="text-orange-500">{numbers.length}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-2 pt-0">
+          {numbers.length > 0 ? (
+            <div className="max-h-32 overflow-y-auto text-xs">
+              <div className="flex flex-wrap gap-1">
+                {numbers.map((num, index) => (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 rounded text-[10px] font-bold ${num === 1 ? 'bg-blue-600 text-white' : 'bg-red-600 text-white'}`}
+                  >
+                    {num}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-xs">{t('noNumbersHint')}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
